@@ -1,0 +1,11 @@
+---
+- name: Dummy playbook
+  hosts: localhost
+  gather_facts: no
+  tasks:
+  - name: set fact
+    set_fact:
+      variable: "this is variable"
+  - name: print variable
+    debug:
+      var: variable

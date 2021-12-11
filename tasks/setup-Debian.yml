@@ -1,0 +1,25 @@
+- name: "{{ ansible_os_family }} - Download Powershell universal package"
+  local_action:
+    module: get_url
+    url: "https://github.com/PowerShell/PowerShell/releases/download/v7.2.0/powershell-lts_7.2.0-1.deb_amd64.deb"
+    dest: ./powershell.deb
+  run_once: true
+
+- block:
+  - name: "{{ ansible_os_family }} - Copy installed onto target host"
+    copy:
+      src: ./powershell.deb
+      dest: ./powershell.deb
+
+  - name: "{{ ansible_os_family }} - Install Powershell"
+    apt:
+      deb: ./powershell.deb
+    become: yes
+
+  always:
+  - name: "{{ ansible_os_family }} - Removing local file"
+    local_action:
+      module: file
+      path: ./powershell.deb
+      state: absent
+    run_once: true

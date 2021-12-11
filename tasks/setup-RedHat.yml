@@ -1,0 +1,26 @@
+- name: "{{ ansible_os_family }} - Download Powershell universal package"
+  local_action:
+    module: get_url
+    url: "https://github.com/PowerShell/PowerShell/releases/download/v7.2.0/powershell-lts-7.2.0-1.rh.x86_64.rpm"
+    dest: ./powershell.rpm
+  run_once: true
+
+- block:
+
+  - name: "{{ ansible_os_family }} - Copy installed onto target host"
+    copy:
+      src: ./powershell.rpm
+      dest: ./powershell.rpm
+
+  - name: "{{ ansible_os_family }} - Install Powershell"
+    yum:
+      name: ./powershell.rpm
+    become: yes
+
+  always:
+  - name: "{{ ansible_os_family }} - Removing local file"
+    local_action:
+      module: file
+      path: ./powershell.rpm
+      state: absent
+    run_once: true

@@ -1,0 +1,24 @@
+---
+# This is an example playbook to execute Ansible tests.
+
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+
+  - name: Prepare PowerShell script
+    copy:
+      dest: /tmp/hello.ps1
+      mode: '0755'
+      content: |
+        #!/bin/pwsh
+
+        Write-Host 'Hello, World!'
+
+  - name: Run sample PowerShell script
+    command: /tmp/hello.ps1
+    register: powershell_run
+
+  - name:
+    assert:
+      that: powershell_run.rc == 0

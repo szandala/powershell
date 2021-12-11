@@ -1,0 +1,27 @@
+# - name: Reboot the machine with all defaults
+#   win_reboot:
+
+- name: "{{ ansible_os_family }} - Download Powershell universal package"
+  local_action:
+    module: get_url
+    url: "https://github.com/PowerShell/PowerShell/releases/download/v7.2.0/PowerShell-7.2.0-win-x64.msi"
+    dest: ./powershell.msi
+  run_once: true
+
+- block:
+  - name: "{{ ansible_os_family }} - Copy installed onto target host"
+    win_copy:
+      src: ./powershell.msi
+      dest: '%HOME%\powershell.msi'
+
+  - name: "{{ ansible_os_family }} - Install Powershell"
+    win_package:
+      path: powershell.msi
+
+  always:
+  - name: "{{ ansible_os_family }} - Removing local file"
+    local_action:
+      module: file
+      path: ./powershell.msi
+      state: absent
+    run_once: true

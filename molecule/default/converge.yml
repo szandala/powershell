@@ -1,0 +1,13 @@
+---
+- name: Converge
+  hosts: all
+  # gather_facts: no
+  gather_subset:
+  - min
+  tasks:
+    # - name: print all
+    #   debug:
+    #     var: hostvars[inventory_hostname]
+    - name: "Include powershell"
+      include_role:
+        name: "powershell_install"

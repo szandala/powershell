@@ -1,0 +1,44 @@
+---
+dependency:
+  name: galaxy
+
+driver:
+  name: vagrant
+
+platforms:
+  - name: ubuntu2004
+    box: ubuntu/focal64
+    version: v20211026.0.0
+
+  - name: centos7
+    box: centos/7
+    version: v2004.01
+
+  # - name: centos7-dummy
+  #   box: centos/7
+  #   version: v2004.01
+
+  - name: windows
+    version: v1.0.0
+    box: jborean93/WindowsServer2019
+    memory: 4096
+    cpus: 4
+    # winssh:
+    #   shell: powershell
+    # ssh:
+    #   shell: powershell
+
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      timeout: 20
+  inventory:
+    host_vars:
+      windows:
+        ansible_connection: ssh
+        ansible_shell_type: cmd
+        ansible_password: vagrant
+
+verifier:
+  name: ansible
