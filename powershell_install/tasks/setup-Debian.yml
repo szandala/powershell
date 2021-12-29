@@ -1,8 +1,8 @@
 - name: "{{ ansible_os_family }} - Download Powershell universal package"
-  local_action:
-    module: get_url
+  get_url:
     url: "https://github.com/PowerShell/PowerShell/releases/download/v7.2.0/powershell-lts_7.2.0-1.deb_amd64.deb"
     dest: ./powershell.deb
+  delegate_to: localhost
   run_once: true
 
 - block:
@@ -10,6 +10,7 @@
     copy:
       src: ./powershell.deb
       dest: ./powershell.deb
+      mode: 0664
 
   - name: "{{ ansible_os_family }} - Install Powershell"
     apt:
@@ -18,8 +19,108 @@
 
   always:
   - name: "{{ ansible_os_family }} - Removing local file"
-    local_action:
-      module: file
+    file:
       path: ./powershell.deb
       state: absent
+    delegate_to: localhost
+    run_once: true
+
+# - name: Prepare Azure packages intallation
+#   apt:
+#     name: "{{ item }}"
+#   loop:
+#   - ca-certificates
+#   - curl
+#   - apt-transport-https
+#   - lsb-release
+#   - gnupg
+
+- name: Add key
+  apt_key:
+    url: https://packages.microsoft.com/keys/microsoft.asc
+  become: yes
+
+- name: Create the APT repository (Debian)
+  apt_repository:
+    repo: "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ {{ ansible_distribution_release }} main"
+    filename: azure
+    state: present
+  become: yes
+
+- name: Install the application package (Debian)
+  apt:
+    name: azure-cli
+    update_cache: yes
+  become: yes
+
+#############################################
+
+# - name: "{{ ansible_os_family }} - Download AZ copy package"
+#   get_url:
+#     url: "https://aka.ms/downloadazcopylinux64"
+#     dest: ./azcopy.tar.gz
+#   delegate_to: localhost
+#   run_once: true
+
+
+# - block:
+#   - name: "{{ ansible_os_family }} - Copy azcopy.tar.gz onto target host"
+#     copy:
+#       src: ./azcopy.tar.gz
+#       dest: ./azcopy.tar.gz
+#       mode: 0644
+
+#   - name: "{{ ansible_os_family }} - Install AZ Copy"
+#     apt:
+#       deb: ./azcopy.tar.gz
+#     become: yes
+
+#   always:
+#   - name: "{{ ansible_os_family }} - Removing local file"
+#     file:
+#       path: ./azcopy.tar.gz
+#       state: absent
+#     delegate_to: localhost
+#     run_once: true
+
+- name: Install package dependencies
+  apt:
+    name: "{{ item }}"
+    update_cache: yes
+  become: yes
+  loop:
+  - tar
+  - unzip
+
+- name: "{{ ansible_os_family }} - Download AZ copy package"
+  get_url:
+    url: "https://aka.ms/downloadazcopy-v10-linux"
+    dest: ./azcopy.tar.gz
+  delegate_to: localhost
+  run_once: true
+
+- block:
+  - name: "{{ ansible_os_family }} - Copy azcopy.tar.gz onto target host"
+    copy:
+      src: ./azcopy.tar.gz
+      dest: ./azcopy.tar.gz
+      mode: 0644
+
+  - name: "{{ ansible_os_family }} - Install azcopy"
+    unarchive:
+      src: ./azcopy.tar.gz
+      dest: /usr/local/bin
+      mode: 0775
+      exclude:
+      - NOTICE.txt
+      extra_opts:
+      - "--strip-components=1"
+    become: yes
+
+  always:
+  - name: "{{ ansible_os_family }} - Removing local file"
+    file:
+      path: ./azcopy.tar.gz
+      state: absent
+    delegate_to: localhost
     run_once: true

@@ -1,8 +1,8 @@
 - name: "{{ ansible_os_family }} - Download Powershell universal package"
-  local_action:
-    module: get_url
+  get_url:
     url: "https://github.com/PowerShell/PowerShell/releases/download/v7.2.0/powershell-lts-7.2.0-1.rh.x86_64.rpm"
     dest: ./powershell.rpm
+  delegate_to: localhost
   run_once: true
 
 - block:
@@ -11,6 +11,7 @@
     copy:
       src: ./powershell.rpm
       dest: ./powershell.rpm
+      mode: 0664
 
   - name: "{{ ansible_os_family }} - Install Powershell"
     yum:
@@ -19,8 +20,69 @@
 
   always:
   - name: "{{ ansible_os_family }} - Removing local file"
-    local_action:
-      module: file
+    file:
       path: ./powershell.rpm
       state: absent
+    delegate_to: localhost
+    run_once: true
+
+###############################
+
+- name: "{{ ansible_os_family }} - Create the YUM repository"
+  yum_repository:
+    name: "Azure_CLI"
+    description: "Microsoft Azure CLI"
+    baseurl: "https://packages.microsoft.com/yumrepos/azure-cli"
+    gpgkey: "https://packages.microsoft.com/keys/microsoft.asc"
+    gpgcheck: yes
+    enabled: yes
+  become: yes
+
+- name: "{{ ansible_os_family }} - Install the application package"
+  yum:
+    name: azure-cli
+  become: yes
+
+##############################
+
+- name: Install package dependencies
+  yum:
+    name: "{{ item }}"
+    update_cache: yes
+  become: yes
+  loop:
+  - tar
+  - unzip
+
+- name: "{{ ansible_os_family }} - Download AZ copy package"
+  get_url:
+    url: "https://aka.ms/downloadazcopy-v10-linux"
+    dest: ./azcopy.tar.gz
+  delegate_to: localhost
+  run_once: true
+
+- block:
+  - name: "{{ ansible_os_family }} - Copy azcopy.tar.gz onto target host"
+    copy:
+      src: ./azcopy.tar.gz
+      dest: ./azcopy.tar.gz
+      mode: 0644
+
+  - name: "{{ ansible_os_family }} - Install azcopy"
+    unarchive:
+      src: ./azcopy.tar.gz
+      dest: /usr/local/bin
+      mode: 0775
+      exclude:
+      - NOTICE.txt
+      extra_opts:
+      - "--strip-components=1"
+    become: yes
+
+  always:
+  - name: "{{ ansible_os_family }} - Removing local file"
+    file:
+      path: ./azcopy.tar.gz
+      state: absent
+    delegate_to: localhost
     run_once: true
